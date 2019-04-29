@@ -15,6 +15,12 @@ typedef struct
 uint32_t io_nand_init_cfg();
 uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint32_t pl_num);
 void     io_nand_get_cfg(io_nand_cfg_t *cfg);
+
+uint32_t io_nand_get_page_size(void);
+uint32_t io_nand_get_block_size(void);
+uint32_t io_nand_get_plane_number(void);
+uint32_t io_nand_get_plane_size(void);
+
 uint32_t io_nand_read_8b (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offset);
 uint32_t io_nand_write_8b(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offset);
 void     io_nand_erase(uint32_t addr);

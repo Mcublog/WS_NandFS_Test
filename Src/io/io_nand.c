@@ -7,24 +7,24 @@ extern NAND_HandleTypeDef hnand1;
 //-----------------------Local variables and fucntion-------------------------
 uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
 uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
-uint32_t _flash_adr_to_uint32(NAND_AddressTypeDef *adr);
+uint32_t            _flash_adr_to_uint32(NAND_AddressTypeDef *adr);
 NAND_AddressTypeDef _uint32_to_flash_adr(uint32_t adr);
 
 static io_nand_cfg_t _nand_cfg = {0};
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
-/brief: Set NAND config
+/brief: Init NAND Config from hnand -> Config
 /param:
 /return: 0 -- if all is good
 -----------------------------------------------------------*/
 uint32_t io_nand_init_cfg()
 {
     //Get config data from hnand1
-    _nand_cfg.page_size     = hnand1 -> Config.PageSize; // Page size (2048)
-    _nand_cfg.block_number  = hnand1 -> Config.BlockNbr; // Total Number of block in plane (1024)
-    _nand_cfg.block_size    = hnand1 -> Config.BlockSize; // Block size (In page) (64)
-    _nand_cfg.plane_number  = hnand1 -> Config.PlaneNbr;  // Number of plane (1)
+    _nand_cfg.page_size     = hnand1 -> Config.PageSize; // Page size (2048 for K9GAG08U0E )
+    _nand_cfg.block_number  = hnand1 -> Config.BlockNbr; // Total Number of block in plane (1024 K9GAG08U0E )
+    _nand_cfg.block_size    = hnand1 -> Config.BlockSize; // Block size (In page) (64 K9GAG08U0E )
+    _nand_cfg.plane_number  = hnand1 -> Config.PlaneNbr;  // Number of plane (1 K9GAG08U0E )
     _nand_cfg.plane_size    = hannd1 -> Config.PlaneSize * _nand_cfg.block_number; // Plane size (In Page)
     return 0;
 }
@@ -59,6 +59,46 @@ uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint3
 void io_nand_get_cfg(io_nand_cfg_t *cfg)
 {
     *cfg = _cfg;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get block size
+/param:
+/return: Block size (In page)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_block_size(void)
+{
+    return _nand_cfg.block_size;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get plane number
+/param:
+/return: Number of plane
+-----------------------------------------------------------*/
+uint32_t io_nand_get_plane_number(void)
+{
+    return _nand_cfg.plane_number;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get plane size (In Blocks)
+/param:
+/return: Plane size (In Blocks)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_plane_size(void)
+{
+    return _nand_cfg.plane_size;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get page size
+/param:
+/return: Page size (In Bytes)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_page_size(void)
+{
+    return _nand_cfg.page_size;
 }
 
 /*-----------------------------------------------------------

@@ -163,6 +163,29 @@ void MX_FSMC_Init(void)
   /* USER CODE END FSMC_Init 2 */
 }
 
+/*-----------------------------------------------------------
+/brief: STDIO retarget functions
+/param: char to stdio thread
+/return: 0 if all ok
+-----------------------------------------------------------*/
+int stdin_getchar (void)
+{
+    return 0;
+}
+
+int stdout_putchar (int ch)
+{
+    HAL_UART_Transmit(&huart3, (uint8_t*)&ch, 1, 1000);
+    return 0;
+}
+
+int stderr_putchar (int ch)
+{ 
+    HAL_UART_Transmit(&huart3, (uint8_t*)&ch, 1, 1000);
+    return 0;
+}
+/*---------------------------------------------------------*/
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM14 interrupt took place, inside

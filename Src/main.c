@@ -5,63 +5,18 @@
 #include "init_main.h"
 #include "test.h"
 #include "io_nand.h"
+#include "io_fs.h"
+#include "lfs.h"
+
 //-----------------------Types and definition---------------------------------
-//Redefine in stm32f4xx_hal_nand.h for Waveshare board
+// NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
 #define CMD_AREA                   ((uint32_t)(1U<<17U))  /* A16 = CLE high */
 #define ADDR_AREA                  ((uint32_t)(1U<<16U))  /* A17 = ALE high */
-
-#define PAGE_NMBR	(64)
-#define BLOCK_NMBR	(1024)
-#define PLANE_NMBR  (1)
-
-#define LAST_PAGE	(PAGE_NMBR - 1)
-#define LAST_BLOCK	(BLOCK_NMBR - 1)
-#define LAST_PLANE	(PLANE_NMBR - 1)
-
-#define PAGE_SIZE  (2048)
-#define PLANE_SIZE (BLOCK_NMBR * PAGE_NMBR)//Plane size in page
-#define BLOCK_SIZE (PAGE_NMBR)//Block size in page
 //----------------------------------------------------------------------------
 
 //-----------------------Local variables and fucntion-------------------------
 UART_HandleTypeDef huart3;
 NAND_HandleTypeDef hnand1;
-
-int fs_flash_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size);
-int fs_flash_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size);
-int fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block);
-int fs_flash_sync(const struct lfs_config *c);
-
-static uint8_t rd[PAGE_SIZE];
-static uint8_t wr[PAGE_SIZE];
-//static uint8_t lfs_lookahead_buf[PAGE_SIZE];
-
-static struct lfs_config cfg =
-{
-
-    .read_size   = PAGE_SIZE,
-    .prog_size   = PAGE_SIZE,
-    
-    .block_size  = PAGE_NMBR * 2048,
-    .block_count = (BLOCK_NMBR * PLANE_NMBR),
-    
-    .lookahead_size = PAGE_SIZE,
-    .cache_size = PAGE_SIZE,
-    
-	.read_buffer = rd,
-	.prog_buffer = wr,
-	//.lookahead_buffer = lfs_lookahead_buf,
-	//cfg.file_buffer = lfs_file_buf;
-
-    .read = fs_flash_read,
-    .prog = fs_flash_prog,
-    .erase = fs_flash_erase,
-    .sync = fs_flash_sync
-};
-
-lfs_file_t file;
-lfs_t lfs;
-
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -105,7 +60,66 @@ int main(void)
     //-----------------------Semaphores takes-------------------------------------
     //xSemaphoreTake(xbExmpl, portMAX_DELAY);
     //----------------------------------------------------------------------------
-    flash_test();
+
+    //flash_test();
+
+    //----------------------------------------------------------------------------
+    io_nand_init_cfg();
+
+    uint8_t rd[io_nand_get_page_size()];
+    uint8_t wr[io_nand_get_page_size()];
+    
+    struct lfs_config cfg =
+    {
+
+        .read_size   = io_nand_get_page_size(),
+        .prog_size   = io_nand_get_page_size(),
+    
+        .block_size  = io_nand_get_block_size() * io_nand_get_page_size(),
+        .block_count = io_nand_get_plane_size() * io_nand_get_plane_number(),
+    
+        .lookahead_size = io_nand_get_page_size(),
+        .cache_size     = io_nand_get_page_size(),
+    
+	    .read_buffer = rd,
+	    .prog_buffer = wr,
+
+        .read   = io_fs_flash_read,
+        .prog   = io_fs_flash_prog,
+        .erase  = io_fs_flash_erase,
+        .sync   = io_fs_flash_sync
+    };
+
+    lfs_file_t  file;
+    lfs_t       lfs;
+    
+    volatile int32_t err = 0;
+    err = lfs_mount(&lfs, &cfg);
+    if (err < 0)
+    {
+        err = lfs_format(&lfs, &cfg);
+        err = lfs_mount(&lfs, &cfg);
+    }
+    
+    // read current count
+    uint32_t boot_count = 0;
+    err = lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    err = lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+
+    // update boot count
+    boot_count += 1;
+    err = lfs_file_rewind(&lfs, &file);
+    err = lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+
+    // remember the storage is not updated until the file is closed successfully
+    err = lfs_file_close(&lfs, &file);
+
+    // release any resources we were using
+    err = lfs_unmount(&lfs);
+
+    // print the boot count
+    printf("boot_count: %d\n", boot_count);
+    //----------------------------------------------------------------------------
 
     osKernelStart();
     while (1)
@@ -123,101 +137,3 @@ void StartDefaultTask (void *pvParameters)
    }
 }
 //----------------------------------------------------------------------------
-
-/*-----------------------------------------------------------
-/brief: Read data from flash
-/param: Pointer to lfs config
-/param: Number block
-/param: Page offset
-/param: Pointer to buffer
-/param: Number bytes to read
-/return: 0 if all ok
------------------------------------------------------------*/
-int fs_flash_read(  const struct lfs_config *cfg, lfs_block_t block,
-                    lfs_off_t off, void *buffer, lfs_size_t size)
-{
-    assert(off  % cfg->read_size == 0);
-    assert(size % cfg->read_size == 0);
-    assert(block < cfg->block_count);    
-    
-    NAND_AddressTypeDef a = {0};
-    a.Block = block;
-    a.Page = off / hnand1->Config.PageSize;
-    io_nand_write_8b(block + off, (uint8_t*) buffer, size, off % hnand1->Config.PageSize);
-    //_NAND_Read_Page_8b(&hnand1, &a, (uint8_t*)buffer, size, off % hnand1->Config.PageSize);
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: Program data to flash
-/param: Pointer to lfs config
-/param: Number block
-/param: Page offset
-/param: Pointer to buffer
-/param: Number bytes to write
-/return: 0 if all ok
------------------------------------------------------------*/
-int fs_flash_prog(  const struct lfs_config *cfg, lfs_block_t block,
-                    lfs_off_t off, const void *buffer, lfs_size_t size)
-{
-
-    assert(off  % cfg->prog_size == 0);
-    assert(size % cfg->prog_size == 0);
-    assert(block < cfg->block_count);  
-
-    NAND_AddressTypeDef a = {0};
-    a.Block = block;
-    a.Page = off / hnand1->Config.PageSize;
-    io_nand_read_8b (block + off, (uint8_t*) buffer, size, off % hnand1->Config.PageSize);
-    //_NAND_Write_Page_8b(&hnand1, &a, (uint8_t*)buffer, size, off % hnand1->Config.PageSize);   
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: Erase block
-/param: Pointer to lfs config
-/param: Number block
-/return: 0 if all ok
------------------------------------------------------------*/
-int fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block)
-{
-    assert(block < cfg->block_count);  
-    NAND_AddressTypeDef a = {0};
-    a.Block = block;
-    io_nand_erase(block);
-    //HAL_NAND_Erase_Block(&hnand1, &a);
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: Sync data
-/param: Pointer to lfs config
-/return: 0 if all ok
------------------------------------------------------------*/
-int fs_flash_sync(const struct lfs_config *c)
-{
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: STDIO retarget functions
-/param: char to stdio thread
-/return: 0 if all ok
------------------------------------------------------------*/
-int stdin_getchar (void)
-{
-    return 0;
-}
-
-int stdout_putchar (int ch)
-{
-    HAL_UART_Transmit(&huart3, (uint8_t*)&ch, 1, 1000);
-    return 0;
-}
-
-int stderr_putchar (int ch)
-{ 
-    HAL_UART_Transmit(&huart3, (uint8_t*)&ch, 1, 1000);
-    return 0;
-}
-/*---------------------------------------------------------*/
