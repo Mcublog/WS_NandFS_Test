@@ -12,7 +12,7 @@ typedef struct
     uint32_t plane_size;    // Plane size (In Page)
 }io_nand_cfg_t;
 
-uint32_t io_nand_init_cfg();
+uint32_t io_nand_init_cfg(void);
 uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint32_t pl_num);
 void     io_nand_get_cfg(io_nand_cfg_t *cfg);
 
