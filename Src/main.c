@@ -65,21 +65,22 @@ int main(void)
 
     //----------------------------------------------------------------------------
     io_nand_init_cfg();
+    const uint32_t page_size = io_nand_get_page_size();
 
-    uint8_t rd[io_nand_get_page_size()];
-    uint8_t wr[io_nand_get_page_size()];
+    uint8_t rd[2048];
+    uint8_t wr[2048];
     
     struct lfs_config cfg =
     {
 
-        .read_size   = io_nand_get_page_size(),
-        .prog_size   = io_nand_get_page_size(),
+        .read_size   = page_size,
+        .prog_size   = page_size,
     
-        .block_size  = io_nand_get_block_size() * io_nand_get_page_size(),
-        .block_count = io_nand_get_plane_size() * io_nand_get_plane_number(),
+        .block_size  = io_nand_get_block_size() * page_size,
+        .block_count = 1024,
     
-        .lookahead_size = io_nand_get_page_size(),
-        .cache_size     = io_nand_get_page_size(),
+        .lookahead_size = page_size,
+        .cache_size     = page_size,
     
 	    .read_buffer = rd,
 	    .prog_buffer = wr,

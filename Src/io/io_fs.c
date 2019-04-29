@@ -21,7 +21,7 @@ int io_fs_flash_read(  const struct lfs_config *cfg, lfs_block_t block,
     assert(block < cfg->block_count);   
 
     uint32_t addr = block * io_nand_get_block_size();
-    io_nand_write_8b(addr, (uint8_t*) buffer, size, off % io_nand_get_page_size());
+    io_nand_read_8b(addr, (uint8_t*) buffer, size, off % io_nand_get_page_size());
 
     return 0;
 }
@@ -44,7 +44,7 @@ int io_fs_flash_prog(  const struct lfs_config *cfg, lfs_block_t block,
     assert(block < cfg->block_count);  
 
     uint32_t addr = block * io_nand_get_block_size();
-    io_nand_read_8b (addr, (uint8_t*) buffer, size, off % io_nand_get_page_size());
+    io_nand_write_8b(addr, (uint8_t*) buffer, size, off % io_nand_get_page_size());
   
     return 0;
 }
@@ -59,7 +59,8 @@ int io_fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block)
 {
     assert(block < cfg->block_count);  
 
-    io_nand_erase(block * io_nand_get_block_size());
+    uint32_t addr = block * io_nand_get_block_size();
+    io_nand_erase(addr);
 
     return 0;
 }
