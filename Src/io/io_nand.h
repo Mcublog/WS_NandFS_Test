@@ -17,6 +17,7 @@ uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint3
 void     io_nand_get_cfg(io_nand_cfg_t *cfg);
 
 uint32_t io_nand_get_page_size(void);
+uint32_t io_nand_get_block_number(void);
 uint32_t io_nand_get_block_size(void);
 uint32_t io_nand_get_plane_number(void);
 uint32_t io_nand_get_plane_size(void);

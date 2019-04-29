@@ -77,7 +77,7 @@ int main(void)
         .prog_size   = page_size,
     
         .block_size  = io_nand_get_block_size() * page_size,
-        .block_count = 1024,
+        .block_count = io_nand_get_block_number(),
     
         .lookahead_size = page_size,
         .cache_size     = page_size,

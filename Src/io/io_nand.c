@@ -74,6 +74,16 @@ uint32_t io_nand_get_block_size(void)
 }
 
 /*-----------------------------------------------------------
+/brief: NAND Flash get block number
+/param:
+/return: Block size (In page)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_block_number(void)
+{
+    return _nand_cfg.block_number;
+}
+
+/*-----------------------------------------------------------
 /brief: NAND Flash get plane number
 /param:
 /return: Number of plane
