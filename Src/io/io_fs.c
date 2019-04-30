@@ -11,7 +11,7 @@ int _fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block);
 int _fs_flash_sync(const struct lfs_config *c);
 
 static lfs_t    _lfs = {0};
-static struct   _lfs_config = {0};
+static struct lfs_config _lfs_config = {0};
 static uint8_t  _rd[2048] = {0};
 static uint8_t  _wr[2048] = {0};
 //----------------------------------------------------------------------------
@@ -96,22 +96,22 @@ int io_fs_init(void)
 {
     uint32_t page_size = io_nand_get_page_size();
 
-    _lfs_config.read_size   = page_size,
-    _lfs_config.prog_size   = page_size,
+    _lfs_config.read_size   = page_size;
+    _lfs_config.prog_size   = page_size;
     
-    _lfs_config.block_size  = io_nand_get_block_size() * page_size,
-    _lfs_config.block_count = io_nand_get_block_number(),
+    _lfs_config.block_size  = io_nand_get_block_size() * page_size;
+    _lfs_config.block_count = io_nand_get_block_number();
     
-    _lfs_config.lookahead_size = page_size,
-    _lfs_config.cache_size     = page_size,
+    _lfs_config.lookahead_size = page_size;
+    _lfs_config.cache_size     = page_size;
     
-    _lfs_config.read_buffer = _rd,
-    _lfs_config.prog_buffer = _wr,
+    _lfs_config.read_buffer = _rd;
+    _lfs_config.prog_buffer = _wr;
 
-    _lfs_config.read   = _fs_flash_read,
-    _lfs_config.prog   = _fs_flash_prog,
-    _lfs_config.erase  = _fs_flash_erase,
-    _lfs_config.sync   = _fs_flash_sync
+    _lfs_config.read   = _fs_flash_read;
+    _lfs_config.prog   = _fs_flash_prog;
+    _lfs_config.erase  = _fs_flash_erase;
+    _lfs_config.sync   = _fs_flash_sync;
 
     return 0;
 }
@@ -143,7 +143,7 @@ int io_fs_mount(void)
 -----------------------------------------------------------*/
 int io_fs_unmount()
 {
-    return lfs_unmount(&lfs);
+    return lfs_unmount(&_lfs);
 }
 
 /*-----------------------------------------------------------
@@ -187,7 +187,7 @@ int io_fs_file_read(io_fs_file *file, void *buffer, uint32_t size)
 /param: Size of data
 /return: the number of bytes written, or a negative error code on failure
 -----------------------------------------------------------*/
-int io_fs_file_write(io_fs_file *file, const char *buffer, uint32_t size)
+int io_fs_file_write(io_fs_file *file, void *buffer, uint32_t size)
 {
     return lfs_file_write(&_lfs, &file->f, buffer, size);
 }

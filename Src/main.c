@@ -74,7 +74,7 @@ int main(void)
     // read current count
     uint32_t boot_count = 0;
     err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
-    err = io_fs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    err = io_fs_file_read(&file, &boot_count, sizeof(boot_count));
 
     // update boot count
     boot_count += 1;

@@ -38,13 +38,13 @@ int io_fs_init(void);
 
 int io_fs_format(void);
 int io_fs_mount(void);
-int io_fs_unmount();
+int io_fs_unmount(void);
 
 int io_fs_file_open(io_fs_file *file, const char *path, int32_t flags);
 
 int io_fs_file_close(io_fs_file *file);
-int io_fs_file_read(io_fs_file *file, void *buffer,     uint32_t size);
-int io_fs_file_write(io_fs_file *file, const char *buffer, uint32_t size);
+int io_fs_file_read(io_fs_file *file, void *buffer,  uint32_t size);
+int io_fs_file_write(io_fs_file *file, void *buffer, uint32_t size);
 
 int io_fs_file_rewind(io_fs_file *file);
 
