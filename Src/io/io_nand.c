@@ -1,8 +1,7 @@
 #include "io_nand.h"
 
 #include "stm32f4xx_hal.h"
-
-extern NAND_HandleTypeDef hnand1;
+#include "init_main.h"
 
 //-----------------------Local variables and fucntion-------------------------
 uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
@@ -10,8 +9,21 @@ uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress
 uint32_t            _flash_adr_to_uint32(NAND_AddressTypeDef *adr);
 NAND_AddressTypeDef _uint32_to_flash_adr(uint32_t adr);
 
+NAND_HandleTypeDef hnand1;
 static io_nand_cfg_t _nand_cfg = {0};
 //----------------------------------------------------------------------------
+
+/*-----------------------------------------------------------
+/brief: Init NAND
+/param:
+/return: 0 -- if all is good
+-----------------------------------------------------------*/
+uint32_t io_nand_init(void)
+{
+    MX_FSMC_Init();
+    io_nand_init_cfg();
+    return 0;
+}
 
 /*-----------------------------------------------------------
 /brief: Init NAND Config from hnand -> Config

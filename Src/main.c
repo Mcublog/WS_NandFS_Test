@@ -6,7 +6,6 @@
 #include "test.h"
 #include "io_nand.h"
 #include "io_fs.h"
-#include "lfs.h"
 
 //-----------------------Types and definition---------------------------------
 // NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
@@ -16,7 +15,6 @@
 
 //-----------------------Local variables and fucntion-------------------------
 UART_HandleTypeDef huart3;
-NAND_HandleTypeDef hnand1;
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -41,8 +39,8 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
-    MX_FSMC_Init();
     MX_USART3_UART_Init();    
+    io_nand_init();
     //----------------------------------------------------------------------------
 
     //-----------------------Creating semaphores----------------------------------
@@ -64,59 +62,30 @@ int main(void)
     //flash_test();
 
     //----------------------------------------------------------------------------
-    io_nand_init_cfg();
-    const uint32_t page_size = io_nand_get_page_size();
-
-    uint8_t rd[2048];
-    uint8_t wr[2048];
-    
-    struct lfs_config cfg =
+    io_fs_file file;
+    volatile int32_t err = io_fs_init();
+    err = io_fs_mount();
+    if (err < 0)    
     {
-
-        .read_size   = page_size,
-        .prog_size   = page_size,
-    
-        .block_size  = io_nand_get_block_size() * page_size,
-        .block_count = io_nand_get_block_number(),
-    
-        .lookahead_size = page_size,
-        .cache_size     = page_size,
-    
-	    .read_buffer = rd,
-	    .prog_buffer = wr,
-
-        .read   = io_fs_flash_read,
-        .prog   = io_fs_flash_prog,
-        .erase  = io_fs_flash_erase,
-        .sync   = io_fs_flash_sync
-    };
-
-    lfs_file_t  file;
-    lfs_t       lfs;
-    
-    volatile int32_t err = 0;
-    err = lfs_mount(&lfs, &cfg);
-    if (err < 0)
-    {
-        err = lfs_format(&lfs, &cfg);
-        err = lfs_mount(&lfs, &cfg);
+        err = io_fs_format();
+        err = io_fs_mount();
     }
     
     // read current count
     uint32_t boot_count = 0;
-    err = lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    err = lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
+    err = io_fs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
 
     // update boot count
     boot_count += 1;
-    err = lfs_file_rewind(&lfs, &file);
-    err = lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+    err = io_fs_file_rewind(&file);
+    err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
 
     // remember the storage is not updated until the file is closed successfully
-    err = lfs_file_close(&lfs, &file);
+    err = io_fs_file_close(&file);
 
     // release any resources we were using
-    err = lfs_unmount(&lfs);
+    err = io_fs_unmount();
 
     // print the boot count
     printf("boot_count: %d\n", boot_count);
