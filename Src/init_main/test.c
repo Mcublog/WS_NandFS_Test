@@ -6,12 +6,7 @@
 #include "init_main.h"
 #include "io_nand.h"
 
-#define PAGE_SIZE       (2048)//Page z
-#define SPARE_SIZE      (64)//область spare в байтах
-#define BLOCK_SIZE      (64)//размер блока в страницах
-#define BLOCK_NUMBER    (1024 * PLANE_NUMBER)//общее кол-во блоков
-#define PLANE_NUMBER    (1)//кол-во плейнов
-#define PLANE_SIZE      (1024)//размер плейна в блоках
+#define PAGE_SIZE       (2048)
 
 void flash_test(void)
 {
