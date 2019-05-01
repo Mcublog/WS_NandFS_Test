@@ -64,9 +64,11 @@ int main(void)
     //----------------------------------------------------------------------------
     io_fs_file file;
     volatile int32_t err = io_fs_init();
+    
     err = io_fs_mount();
     if (err < 0)    
     {
+        printf("Format...\r\n");
         err = io_fs_format();
         err = io_fs_mount();
     }
