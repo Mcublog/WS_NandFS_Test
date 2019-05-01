@@ -9,7 +9,7 @@ uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress
 uint32_t            _flash_adr_to_uint32(NAND_AddressTypeDef *adr);
 NAND_AddressTypeDef _uint32_to_flash_adr(uint32_t adr);
 
-NAND_HandleTypeDef hnand1;
+extern NAND_HandleTypeDef hnand1;
 static io_nand_cfg_t _nand_cfg = {0};
 //----------------------------------------------------------------------------
 

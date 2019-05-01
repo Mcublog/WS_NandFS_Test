@@ -6,6 +6,7 @@
 #include "test.h"
 #include "io_nand.h"
 #include "io_fs.h"
+#include "io_serial.h"
 
 //-----------------------Types and definition---------------------------------
 // NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
@@ -14,7 +15,6 @@
 //----------------------------------------------------------------------------
 
 //-----------------------Local variables and fucntion-------------------------
-UART_HandleTypeDef huart3;
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -39,7 +39,7 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
-    MX_USART3_UART_Init();    
+    io_serial_init();    
     io_nand_init();
     //----------------------------------------------------------------------------
 

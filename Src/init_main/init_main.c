@@ -1,8 +1,9 @@
 #include "init_main.h"
 #include "main.h"
 
-extern UART_HandleTypeDef huart3;
-extern NAND_HandleTypeDef hnand1;
+//-----------------------Local variables and fucntion-------------------------
+UART_HandleTypeDef huart3;
+NAND_HandleTypeDef hnand1;
 
 /**
   * @brief System Clock Configuration
@@ -89,22 +90,32 @@ void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LED2_Pin */
-  GPIO_InitStruct.Pin = LED2_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Debug_GPIO_Port, Debug_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : CS_Pin */
+  GPIO_InitStruct.Pin = CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Debug_Pin */
+  GPIO_InitStruct.Pin = Debug_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Debug_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -132,8 +143,8 @@ void MX_FSMC_Init(void)
   hnand1.Init.MemoryDataWidth = FSMC_NAND_PCC_MEM_BUS_WIDTH_8;
   hnand1.Init.EccComputation = FSMC_NAND_ECC_ENABLE;
   hnand1.Init.ECCPageSize = FSMC_NAND_ECC_PAGE_SIZE_512BYTE;
-  hnand1.Init.TCLRSetupTime = 14;
-  hnand1.Init.TARSetupTime = 14;
+  hnand1.Init.TCLRSetupTime = 10;
+  hnand1.Init.TARSetupTime = 10;
   /* hnand1.Config */
   hnand1.Config.PageSize = 2048;
   hnand1.Config.SpareAreaSize = 64;
