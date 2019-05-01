@@ -1,6 +1,6 @@
 #ifndef TEST_H
 #define TEST_H
 
-void flash_test(void);
+void test_nand_flash(void);
 
 #endif
