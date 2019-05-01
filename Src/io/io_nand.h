@@ -23,8 +23,8 @@ uint32_t io_nand_get_block_size(void);
 uint32_t io_nand_get_plane_number(void);
 uint32_t io_nand_get_plane_size(void);
 
-uint32_t io_nand_read_8b (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offset);
-uint32_t io_nand_write_8b(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offset);
+uint32_t io_nand_read_8b (uint32_t addr, uint8_t *buffer, uint32_t size);
+uint32_t io_nand_write_8b(uint32_t addr, uint8_t *buffer, uint32_t size);
 void     io_nand_erase(uint32_t addr);
 
 #endif // IO_NAND_H
