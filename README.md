@@ -1,2 +1,3 @@
 # WS_NandFS_Test
-WS board; LittleFs on NAND Flash; 
+board Waveshare Open407V-C;
+LittleFs on parallel NAND Flash;
