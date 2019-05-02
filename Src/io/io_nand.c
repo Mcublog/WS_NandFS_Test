@@ -137,8 +137,7 @@ uint32_t io_nand_read_8b (uint32_t addr, uint8_t *buffer, uint32_t size)
 {
     //Convert addr -> to HAL_NAND_addr
     NAND_AddressTypeDef a = _uint32_to_flash_adr(addr);
-    uint32_t offset = addr % io_nand_get_page_size();
-    _nand_read_8b (&hnand1, &a, buffer, size, offset);
+    _nand_read_8b (&hnand1, &a, buffer, size, 0);
     return 0;
 }
 
@@ -154,8 +153,7 @@ uint32_t io_nand_write_8b(uint32_t addr, uint8_t *buffer, uint32_t size)
 {
     //Convert addr -> to HAL_NAND_addr
     NAND_AddressTypeDef a = _uint32_to_flash_adr(addr);
-    uint32_t offset = addr % io_nand_get_page_size();
-    _nand_write_8b(&hnand1, &a, buffer, size, offset);
+    _nand_write_8b(&hnand1, &a, buffer, size, 0);
     return 0;    
 }
 
