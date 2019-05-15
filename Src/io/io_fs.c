@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "io_nand.h"
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 int _fs_flash_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size);
 int _fs_flash_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size);
 int _fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block);
@@ -33,7 +33,7 @@ int _fs_flash_read(  const struct lfs_config *cfg, lfs_block_t block,
     assert(block < cfg->block_count);   
 
     uint32_t addr = block * io_nand_get_block_size() + off / io_nand_get_page_size();
-    io_nand_read_8b(addr, (uint8_t*) buffer, size, 0);
+    io_nand_read(addr, (uint8_t*) buffer, size, 0);
 
     return 0;
 }
@@ -56,7 +56,7 @@ int _fs_flash_prog(  const struct lfs_config *cfg, lfs_block_t block,
     assert(block < cfg->block_count);  
 
     uint32_t addr = block * io_nand_get_block_size() + off / io_nand_get_page_size();
-    io_nand_write_8b(addr, (uint8_t*) buffer, size, 0);
+    io_nand_write(addr, (uint8_t*) buffer, size, 0);
   
     return 0;
 }
@@ -72,7 +72,7 @@ int _fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block)
     assert(block < cfg->block_count);  
 
     uint32_t addr = block * io_nand_get_block_size();
-    io_nand_erase(addr);
+    io_nand_block_erase(addr);
 
     return 0;
 }
@@ -102,6 +102,7 @@ int io_fs_init(void)
     _lfs_config.block_size  = io_nand_get_block_size() * page_size;
     _lfs_config.block_count = io_nand_get_block_number();
     
+    _lfs_config.block_cycles = 100;
     _lfs_config.lookahead_size = page_size;
     _lfs_config.cache_size     = page_size;
     

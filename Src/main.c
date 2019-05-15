@@ -3,10 +3,14 @@
 #include <stdio.h>
 
 #include "init_main.h"
+
+#include "io/io_nand/io_nand.h"
+#include "io/io_serial/io_serial.h"
+#include "io/io_fs.h"
+
 #include "test.h"
-#include "io_nand.h"
-#include "io_fs.h"
-#include "io_serial.h"
+
+
 
 //-----------------------Types and definition---------------------------------
 // NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
@@ -19,7 +23,9 @@
 #define TEST_READ_MEASUREMENT
 //----------------------------------------------------------------------------
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
+io_serial_h _ser;
+
 uint8_t test_data[65536] = {0};
 //----------------------------------------------------------------------------
 
@@ -45,7 +51,7 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
-    io_serial_init();    
+    io_serial_init(&_ser, IO_UART);
     io_nand_init();
     //----------------------------------------------------------------------------
 

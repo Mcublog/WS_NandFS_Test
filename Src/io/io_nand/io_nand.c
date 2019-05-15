@@ -1,175 +1,50 @@
 #include "io_nand.h"
 
+#include <stdint.h>
+
+#include "io_nand_types.h"
+
+//---------- HW Specific ---------------------
 #include "stm32f4xx_hal.h"
 #include "init_main.h"
+//---------- HW Specific ---------------------
 
-//-----------------------Local variables and fucntion-------------------------
-uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
-uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
-uint32_t            _flash_adr_to_uint32(NAND_AddressTypeDef *adr);
-NAND_AddressTypeDef _uint32_to_flash_adr(uint32_t adr);
+//-----------------------Local variables and function-------------------------
+static uint32_t _hw_nand_read_8b (io_nand_t *hnand, uint32_t adr, uint8_t *pBuffer, uint32_t size, uint32_t offset);
+static uint32_t _hw_nand_write_8b(io_nand_t *hnand, uint32_t adr, uint8_t *pBuffer, uint32_t size, uint32_t offset);
+static void     _hw_nand_block_erase(io_nand_t *hnand, uint32_t adr);
+static void     _hw_init(io_nand_t *nand);
 
+uint32_t            _hw_flash_adr_to_uint32(NAND_AddressTypeDef *adr);
+NAND_AddressTypeDef _hw_uint32_to_flash_adr(uint32_t adr);
+
+//---------- HW Specific ---------------------
 extern NAND_HandleTypeDef hnand1;
-static io_nand_cfg_t _nand_cfg = {0};
+//---------- HW Specific ---------------------
+
+static io_nand_t _nand= {0};
 //----------------------------------------------------------------------------
 
-/*-----------------------------------------------------------
-/brief: Init NAND
-/param:
-/return: 0 -- if all is good
+/*------------------ HW Specific --------------------------
+/brief: Init HW
+/param: Pointer to NAND Handler
+/return:
 -----------------------------------------------------------*/
-uint32_t io_nand_init(void)
+static void _hw_init(io_nand_t *nand)
 {
     MX_FSMC_Init();
-    io_nand_init_cfg();
-    return 0;
+    nand->pnandh = &hnand1;
+
+    NAND_HandleTypeDef *hwnand = (NAND_HandleTypeDef *) nand->pnandh;
+
+    nand->cfg.page_size     = hwnand->Config.PageSize; // Page size (2048 for K9GAG08U0E )
+    nand->cfg.block_number  = hwnand->Config.BlockNbr; // Total Number of block in plane (1024 K9GAG08U0E )
+    nand->cfg.block_size    = hwnand->Config.BlockSize; // Block size (In page) (64 K9GAG08U0E )
+    nand->cfg.plane_number  = hwnand->Config.PlaneNbr;  // Number of plane (1 K9GAG08U0E )
+    nand->cfg.plane_size    = hwnand->Config.PlaneSize * nand->cfg.block_number; // Plane size (In Page)    
 }
 
-/*-----------------------------------------------------------
-/brief: Init NAND Config from hnand -> Config
-/param:
-/return: 0 -- if all is good
------------------------------------------------------------*/
-uint32_t io_nand_init_cfg()
-{
-    //Get config data from hnand1
-    _nand_cfg.page_size     = hnand1.Config.PageSize; // Page size (2048 for K9GAG08U0E )
-    _nand_cfg.block_number  = hnand1.Config.BlockNbr; // Total Number of block in plane (1024 K9GAG08U0E )
-    _nand_cfg.block_size    = hnand1.Config.BlockSize; // Block size (In page) (64 K9GAG08U0E )
-    _nand_cfg.plane_number  = hnand1.Config.PlaneNbr;  // Number of plane (1 K9GAG08U0E )
-    _nand_cfg.plane_size    = hnand1.Config.PlaneSize * _nand_cfg.block_number; // Plane size (In Page)
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: Set NAND config
-/param: Size page
-/param: Block number
-/param: Block size
-/param: Plane number
-/return: 0 -- if all is good, 1 -- if parameters do not match hnand1->Config
------------------------------------------------------------*/
-uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint32_t pl_num)
-{
-    if (p_size > hnand1.Config.PageSize)     return 1;
-    if (b_num  > hnand1.Config.BlockNbr)     return 1;
-    if (b_size > hnand1.Config.BlockSize)    return 1;
-    if (pl_num > hnand1.Config.PlaneNbr)     return 1;
-
-    _nand_cfg.page_size     = p_size;
-    _nand_cfg.block_number  = b_num;
-    _nand_cfg.block_size    = b_size;
-    _nand_cfg.plane_number  = pl_num;
-    _nand_cfg.plane_size    = pl_num * _nand_cfg.block_number; // Plane size (In Page)
-    
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get config
-/param: Pointer to config
-/return:
------------------------------------------------------------*/
-void io_nand_get_cfg(io_nand_cfg_t *cfg)
-{
-    *cfg = _nand_cfg;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get block size
-/param:
-/return: Block size (In page)
------------------------------------------------------------*/
-uint32_t io_nand_get_block_size(void)
-{
-    return _nand_cfg.block_size;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get block number
-/param:
-/return: Block size (In page)
------------------------------------------------------------*/
-uint32_t io_nand_get_block_number(void)
-{
-    return _nand_cfg.block_number;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get plane number
-/param:
-/return: Number of plane
------------------------------------------------------------*/
-uint32_t io_nand_get_plane_number(void)
-{
-    return _nand_cfg.plane_number;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get plane size (In Blocks)
-/param:
-/return: Plane size (In Blocks)
------------------------------------------------------------*/
-uint32_t io_nand_get_plane_size(void)
-{
-    return _nand_cfg.plane_size;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash get page size
-/param:
-/return: Page size (In Bytes)
------------------------------------------------------------*/
-uint32_t io_nand_get_page_size(void)
-{
-    return _nand_cfg.page_size;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash read data
-/param: Address
-/param: Pointer to read buffer
-/param: Number bytes to read
-/param: Offset in page
-/return: 0 -- if all is good
------------------------------------------------------------*/
-uint32_t io_nand_read_8b (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
-{
-    //Convert addr -> to HAL_NAND_addr
-    NAND_AddressTypeDef a = _uint32_to_flash_adr(addr);
-    _nand_read_8b (&hnand1, &a, buffer, size, 0);
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash write data
-/param: Address
-/param: Pointer to write buffer
-/param: Number bytes to write
-/param: Offset in page
-/return: 0 -- if all is good
------------------------------------------------------------*/
-uint32_t io_nand_write_8b(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
-{
-    //Convert addr -> to HAL_NAND_addr
-    NAND_AddressTypeDef a = _uint32_to_flash_adr(addr);
-    _nand_write_8b(&hnand1, &a, buffer, size, offst);
-    return 0;    
-}
-
-/*-----------------------------------------------------------
-/brief: NAND Flash erase block
-/param: Block address
-/return:
------------------------------------------------------------*/
-void io_nand_erase(uint32_t addr)
-{
-    //Convert addr -> to HAL_NAND_addr
-    NAND_AddressTypeDef a = _uint32_to_flash_adr(addr);
-    HAL_NAND_Erase_Block(&hnand1, &a);
-}
-
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: NAND Flash read data
 /param: Pointer to NAND handle
 /param: Pointer to NAND address
@@ -178,8 +53,11 @@ void io_nand_erase(uint32_t addr)
 /param: Offset in page
 /return: 0 -- if all is good
 -----------------------------------------------------------*/
-uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset)
+uint32_t _hw_nand_read_8b (io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, uint32_t size, uint32_t offset)
 {
+    NAND_AddressTypeDef Address = _hw_uint32_to_flash_adr(addr);
+    NAND_AddressTypeDef *pAddress = &Address;
+
     __IO uint32_t index  = 0U;
     uint32_t tickstart = 0U;
     uint32_t deviceaddress = 0U, nandaddress = 0U;
@@ -285,7 +163,7 @@ uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress
     return HAL_OK;
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: NAND Flash write data
 /param: Pointer to NAND handle
 /param: Pointer to NAND address
@@ -294,8 +172,11 @@ uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress
 /param: Offset in page
 /return: 0 -- if all is good
 -----------------------------------------------------------*/
-uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset)
+uint32_t _hw_nand_write_8b((io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, uint32_t size, uint32_t offset)
 {
+    NAND_AddressTypeDef Address = _hw_uint32_to_flash_adr(addr);
+    NAND_AddressTypeDef *pAddress = &Address;
+
     __IO uint32_t index = 0U;
     uint32_t tickstart = 0U;
     uint32_t deviceaddress = 0U, nandaddress = 0U;
@@ -397,28 +278,169 @@ uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress
     return HAL_OK;
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
+/brief:  Erase block
+/param:  Block addr
+/return:
+-----------------------------------------------------------*/
+static void _hw_nand_block_erase(uint32_t addr)
+{
+    NAND_AddressTypeDef a = _hw_uint32_to_flash_adr(addr);
+    HAL_NAND_Erase_Block(_nand.pnandh, &a);
+}
+
+/*------------------ HW Specific --------------------------
 /brief:  Convert adr NAND_AddressTypeDef -> uint32_t
 /param:  Addr in uint32_t format
 /return: NAND addr in NAND_AddressTypeDef format
 -----------------------------------------------------------*/
-uint32_t _flash_adr_to_uint32(NAND_AddressTypeDef *adr)
+uint32_t _hw_flash_adr_to_uint32(NAND_AddressTypeDef *adr)
 {
-	uint32_t a = (adr -> Plane * _nand_cfg.plane_size) + (adr -> Block * _nand_cfg.block_size) + adr -> Page;
+	uint32_t a = (adr -> Plane * _nand.cfg.plane_size) + (adr -> Block * _nand.cfg.block_size) + adr -> Page;
 	return a;
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief:  Convert adr uint32_t -> NAND_AddressTypeDef
 /param:  Addr in uint32_t format
 /return: NAND addr in NAND_AddressTypeDef format
 -----------------------------------------------------------*/
-NAND_AddressTypeDef _uint32_to_flash_adr(uint32_t adr)
+NAND_AddressTypeDef _hw_uint32_to_flash_adr(uint32_t adr)
 {
 	NAND_AddressTypeDef a;
-	a.Plane = adr / _nand_cfg.plane_size;
-	a.Block = (adr - a.Plane * _nand_cfg.plane_size) / _nand_cfg.block_size;
-	a.Page  = adr - (a.Plane * _nand_cfg.plane_size) - (a.Block * _nand_cfg.block_size);
+	a.Plane = adr / _nand.cfg.plane_size;
+	a.Block = (adr - a.Plane * _nand.cfg.plane_size) / _nand.cfg.block_size;
+	a.Page  = adr - (a.Plane * _nand.cfg.plane_size) - (a.Block * _nand.cfg.block_size);
 
 	return a;
+}
+
+/*-----------------------------------------------------------
+/brief: Init NAND
+/param:
+/return: 0 -- if all is good
+-----------------------------------------------------------*/
+uint32_t io_nand_init(void)
+{
+    _hw_init(&_nand);
+    io_nand_init_cfg();
+    return 0;
+}
+
+/*-----------------------------------------------------------
+/brief: Set NAND config
+/param: Size page
+/param: Block number
+/param: Block size
+/param: Plane number
+/return: 0 -- if all is good
+-----------------------------------------------------------*/
+uint32_t io_nand_set_cfg(uint32_t p_size, uint32_t b_num, uint32_t b_size, uint32_t pl_num)
+{
+    _nand.cfg.page_size     = p_size;
+    _nand.cfg.block_number  = b_num;
+    _nand.cfg.block_size    = b_size;
+    _nand.cfg.plane_number  = pl_num;
+
+    _nand.cfg.plane_size    = pl_num * _nand.cfg.block_number; // Plane size (In Page)
+    
+    return 0;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get config
+/param: Pointer to config
+/return:
+-----------------------------------------------------------*/
+void io_nand_get_cfg(io_nand_cfg_t *cfg)
+{
+    *cfg = _nand.cfg;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get block size
+/param:
+/return: Block size (In page)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_block_size(void)
+{
+    return _nand.cfg.block_size;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get block number
+/param:
+/return: Block size (In page)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_block_number(void)
+{
+    return _nand.cfg.block_number;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get plane number
+/param:
+/return: Number of plane
+-----------------------------------------------------------*/
+uint32_t io_nand_get_plane_number(void)
+{
+    return _nand.cfg.plane_number;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get plane size (In Blocks)
+/param:
+/return: Plane size (In Blocks)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_plane_size(void)
+{
+    return _nand.cfg.plane_size;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash get page size
+/param:
+/return: Page size (In Bytes)
+-----------------------------------------------------------*/
+uint32_t io_nand_get_page_size(void)
+{
+    return _nand.cfg.page_size;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash read data
+/param: Address
+/param: Pointer to read buffer
+/param: Number bytes to read
+/param: Offset in page
+/return: 0 -- if all is good
+-----------------------------------------------------------*/
+uint32_t io_nand_read (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
+{
+    _hw_nand_read_8b (_nand.pnandh, addr, buffer, size, 0);
+    return 0;
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash write data
+/param: Address
+/param: Pointer to write buffer
+/param: Number bytes to write
+/param: Offset in page
+/return: 0 -- if all is good
+-----------------------------------------------------------*/
+uint32_t io_nand_write(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
+{
+    _hw_nand_write_8b(_nand.pnandh, addr, buffer, size, offst);
+    return 0;    
+}
+
+/*-----------------------------------------------------------
+/brief: NAND Flash erase block
+/param: Block address
+/return:
+-----------------------------------------------------------*/
+void io_nand_block_erase(uint32_t addr)
+{
+    _hw_nand_erase(&_nand, addr);
 }
