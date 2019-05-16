@@ -18,20 +18,4 @@ typedef struct
     void          *pnandh;// Pointer to NAND Handler
 }io_nand_t;
 
-#ifndef HAL_NAND_MODULE_ENABLED
-/** 
-  * @brief  NAND Memory address Structure definition
-  */
-typedef struct 
-{
-  uint16_t Page;   /*!< NAND memory Page address    */
-
-  uint16_t Plane;   /*!< NAND memory Plane address  */
-
-  uint16_t Block;  /*!< NAND memory Block address   */
-
-}NAND_AddressTypeDef;
-#endif
-
-
 #endif // IO_NAND_TYPES

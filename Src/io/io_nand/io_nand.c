@@ -57,6 +57,7 @@ uint32_t _hw_nand_read_8b (io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, ui
 {
     NAND_AddressTypeDef Address = _hw_uint32_to_flash_adr(addr);
     NAND_AddressTypeDef *pAddress = &Address;
+    NAND_HandleTypeDef *hnand = pnand->pnandh;
 
     __IO uint32_t index  = 0U;
     uint32_t tickstart = 0U;
@@ -172,10 +173,11 @@ uint32_t _hw_nand_read_8b (io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, ui
 /param: Offset in page
 /return: 0 -- if all is good
 -----------------------------------------------------------*/
-uint32_t _hw_nand_write_8b((io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, uint32_t size, uint32_t offset)
+uint32_t _hw_nand_write_8b(io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, uint32_t size, uint32_t offset)
 {
     NAND_AddressTypeDef Address = _hw_uint32_to_flash_adr(addr);
     NAND_AddressTypeDef *pAddress = &Address;
+    NAND_HandleTypeDef *hnand = pnand->pnandh;
 
     __IO uint32_t index = 0U;
     uint32_t tickstart = 0U;
@@ -283,10 +285,11 @@ uint32_t _hw_nand_write_8b((io_nand_t *pnand, uint32_t addr, uint8_t *pBuffer, u
 /param:  Block addr
 /return:
 -----------------------------------------------------------*/
-static void _hw_nand_block_erase(uint32_t addr)
+static void _hw_nand_block_erase(io_nand_t *pnand, uint32_t addr)
 {
     NAND_AddressTypeDef a = _hw_uint32_to_flash_adr(addr);
-    HAL_NAND_Erase_Block(_nand.pnandh, &a);
+    NAND_HandleTypeDef *hnand = pnand->pnandh;
+    HAL_NAND_Erase_Block(hnand, &a);
 }
 
 /*------------------ HW Specific --------------------------
@@ -323,7 +326,6 @@ NAND_AddressTypeDef _hw_uint32_to_flash_adr(uint32_t adr)
 uint32_t io_nand_init(void)
 {
     _hw_init(&_nand);
-    io_nand_init_cfg();
     return 0;
 }
 
@@ -417,7 +419,7 @@ uint32_t io_nand_get_page_size(void)
 -----------------------------------------------------------*/
 uint32_t io_nand_read (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
 {
-    _hw_nand_read_8b (_nand.pnandh, addr, buffer, size, 0);
+    _hw_nand_read_8b (&_nand, addr, buffer, size, 0);
     return 0;
 }
 
@@ -431,7 +433,7 @@ uint32_t io_nand_read (uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t o
 -----------------------------------------------------------*/
 uint32_t io_nand_write(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t offst)
 {
-    _hw_nand_write_8b(_nand.pnandh, addr, buffer, size, offst);
+    _hw_nand_write_8b(&_nand, addr, buffer, size, offst);
     return 0;    
 }
 
@@ -442,5 +444,5 @@ uint32_t io_nand_write(uint32_t addr, uint8_t *buffer, uint32_t size, uint32_t o
 -----------------------------------------------------------*/
 void io_nand_block_erase(uint32_t addr)
 {
-    _hw_nand_erase(&_nand, addr);
+    _hw_nand_block_erase(&_nand, addr);
 }

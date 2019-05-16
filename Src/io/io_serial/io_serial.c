@@ -38,7 +38,7 @@ static void _hw_init(io_serial_h *ser)
         MX_USART3_UART_Init();
 
         ser->phuart = &huart3;
-        ser->phdma  = NULL;
+        ser->phdma  = NULL;        
     }
     // TODO: else if (ser->type == IO_USB);
 }
@@ -54,7 +54,7 @@ static void _hw_deinit(io_serial_h *ser)
     {        
         ser->type = IO_NONE;
         
-        MX_USART3_UART_Deinit();
+        //MX_USART3_UART_Deinit();
     
         ser->phuart = NULL;
         ser->phdma  = NULL;

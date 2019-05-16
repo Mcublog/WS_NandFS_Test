@@ -15,8 +15,8 @@ void test_nand_flash(void)
     
 	uint8_t buff[PAGE_SIZE];
     	   
-    io_nand_erase(a);	
-    io_nand_read_8b (a, (uint8_t*) &buff, PAGE_SIZE, 0);
+    io_nand_block_erase(a);	
+    io_nand_read (a, (uint8_t*) &buff, PAGE_SIZE, 0);
     
     printf("----------------\r\n"); 
     printf("Erase test\r\n");    
@@ -44,12 +44,12 @@ void test_nand_flash(void)
             //printf("%#x ", buff[i]);
             //if (i % 16 == 0 && i != 0) printf("\r\n");
         }
-        io_nand_write_8b(a, (uint8_t*)&buff, PAGE_SIZE, 0);
+        io_nand_write(a, (uint8_t*)&buff, PAGE_SIZE, 0);
         printf("Write buffer: OK...\r\n");
         printf("----------------\r\n\r\n");
     
         for (i = 0; i < PAGE_SIZE; i++) buff[i]=0;
-        io_nand_read_8b (a , (uint8_t*) &buff, PAGE_SIZE, 0);
+        io_nand_read (a , (uint8_t*) &buff, PAGE_SIZE, 0);
     
         printf("----------------\r\n"); 
         printf("Read buff and check...\r\n");
