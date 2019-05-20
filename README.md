@@ -1,4 +1,5 @@
 # WS_NandFS_Test
+* Project IDE: ARM Keil uVision v5.23
 * Target board: Waveshare Open407V-C;
 * LittleFs run on parallel NAND Flash;
 
