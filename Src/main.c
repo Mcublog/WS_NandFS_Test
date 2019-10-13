@@ -117,6 +117,7 @@ int main(void)
     err = io_fs_file_open(&file, "test_data", IO_FS_O_RDWR | IO_FS_O_CREAT);
     
     // Speed test during the first recording
+    printf("Start write test\r\n");
     #ifdef FIRST_TEST_WRITE_MEASUREMENT
         HAL_GPIO_WritePin(Debug_GPIO_Port, Debug_Pin, GPIO_PIN_SET);
     #endif
@@ -153,6 +154,7 @@ int main(void)
     err = io_fs_unmount();
     
     //----- Read speed test ----
+    printf("Start read test\r\n");
     err = io_fs_mount();
     err = io_fs_file_open(&file, "test_data", IO_FS_O_RDWR | IO_FS_O_CREAT);
     
@@ -168,6 +170,8 @@ int main(void)
 
     err = io_fs_file_close(&file);
     err = io_fs_unmount();
+    
+    printf("test end\r\n");
 #endif    
     //----------------------------------------------------------------------------    
 
