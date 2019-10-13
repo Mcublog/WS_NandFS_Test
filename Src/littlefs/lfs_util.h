@@ -31,7 +31,10 @@
 #ifndef LFS_NO_ASSERT
 #include <assert.h>
 #endif
-#if !defined(LFS_NO_DEBUG) || !defined(LFS_NO_WARN) || !defined(LFS_NO_ERROR)
+#if !defined(LFS_NO_DEBUG) || \
+        !defined(LFS_NO_WARN) || \
+        !defined(LFS_NO_ERROR) || \
+        defined(LFS_YES_TRACE)
 #include <stdio.h>
 #endif
 
@@ -46,23 +49,30 @@ extern "C"
 // code footprint
 
 // Logging functions
+#ifdef LFS_YES_TRACE
+#define LFS_TRACE(fmt, ...) \
+    printf("lfs_trace:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+#else
+#define LFS_TRACE(fmt, ...)
+#endif
+
 #ifndef LFS_NO_DEBUG
 #define LFS_DEBUG(fmt, ...) \
-    printf("lfs debug:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_debug:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #else
 #define LFS_DEBUG(fmt, ...)
 #endif
 
 #ifndef LFS_NO_WARN
 #define LFS_WARN(fmt, ...) \
-    printf("lfs warn:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_warn:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #else
 #define LFS_WARN(fmt, ...)
 #endif
 
 #ifndef LFS_NO_ERROR
 #define LFS_ERROR(fmt, ...) \
-    printf("lfs error:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_error:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #else
 #define LFS_ERROR(fmt, ...)
 #endif
@@ -143,14 +153,14 @@ static inline int lfs_scmp(uint32_t a, uint32_t b) {
 // Convert between 32-bit little-endian and native order
 static inline uint32_t lfs_fromle32(uint32_t a) {
 #if !defined(LFS_NO_INTRINSICS) && ( \
-    (defined(  BYTE_ORDER  ) &&   BYTE_ORDER   ==   ORDER_LITTLE_ENDIAN  ) || \
-    (defined(__BYTE_ORDER  ) && __BYTE_ORDER   == __ORDER_LITTLE_ENDIAN  ) || \
-    (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+    (defined(  BYTE_ORDER  ) && defined(  ORDER_LITTLE_ENDIAN  ) &&   BYTE_ORDER   ==   ORDER_LITTLE_ENDIAN  ) || \
+    (defined(__BYTE_ORDER  ) && defined(__ORDER_LITTLE_ENDIAN  ) && __BYTE_ORDER   == __ORDER_LITTLE_ENDIAN  ) || \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
     return a;
 #elif !defined(LFS_NO_INTRINSICS) && ( \
-    (defined(  BYTE_ORDER  ) &&   BYTE_ORDER   ==   ORDER_BIG_ENDIAN  ) || \
-    (defined(__BYTE_ORDER  ) && __BYTE_ORDER   == __ORDER_BIG_ENDIAN  ) || \
-    (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
+    (defined(  BYTE_ORDER  ) && defined(  ORDER_BIG_ENDIAN  ) &&   BYTE_ORDER   ==   ORDER_BIG_ENDIAN  ) || \
+    (defined(__BYTE_ORDER  ) && defined(__ORDER_BIG_ENDIAN  ) && __BYTE_ORDER   == __ORDER_BIG_ENDIAN  ) || \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
     return __builtin_bswap32(a);
 #else
     return (((uint8_t*)&a)[0] <<  0) |
@@ -167,14 +177,14 @@ static inline uint32_t lfs_tole32(uint32_t a) {
 // Convert between 32-bit big-endian and native order
 static inline uint32_t lfs_frombe32(uint32_t a) {
 #if !defined(LFS_NO_INTRINSICS) && ( \
-    (defined(  BYTE_ORDER  ) &&   BYTE_ORDER   ==   ORDER_LITTLE_ENDIAN  ) || \
-    (defined(__BYTE_ORDER  ) && __BYTE_ORDER   == __ORDER_LITTLE_ENDIAN  ) || \
-    (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+    (defined(  BYTE_ORDER  ) && defined(  ORDER_LITTLE_ENDIAN  ) &&   BYTE_ORDER   ==   ORDER_LITTLE_ENDIAN  ) || \
+    (defined(__BYTE_ORDER  ) && defined(__ORDER_LITTLE_ENDIAN  ) && __BYTE_ORDER   == __ORDER_LITTLE_ENDIAN  ) || \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
     return __builtin_bswap32(a);
 #elif !defined(LFS_NO_INTRINSICS) && ( \
-    (defined(  BYTE_ORDER  ) &&   BYTE_ORDER   ==   ORDER_BIG_ENDIAN  ) || \
-    (defined(__BYTE_ORDER  ) && __BYTE_ORDER   == __ORDER_BIG_ENDIAN  ) || \
-    (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
+    (defined(  BYTE_ORDER  ) && defined(  ORDER_BIG_ENDIAN  ) &&   BYTE_ORDER   ==   ORDER_BIG_ENDIAN  ) || \
+    (defined(__BYTE_ORDER  ) && defined(__ORDER_BIG_ENDIAN  ) && __BYTE_ORDER   == __ORDER_BIG_ENDIAN  ) || \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
     return a;
 #else
     return (((uint8_t*)&a)[0] << 24) |
